@@ -1,38 +1,31 @@
 # Tournament QA Portfolio
 
-This project shows how a QA engineer turns tournament scoring risks into a test strategy, manual coverage, and a plan for API checks, Cypress regression tests, and CI.
+[![Tournament QA CI](https://github.com/EugeneM321/tournament-qa-portfolio/actions/workflows/qa.yml/badge.svg?branch=main)](https://github.com/EugeneM321/tournament-qa-portfolio/actions/workflows/qa.yml?query=branch%3Amain)
 
-It is an independent portfolio implementation using synthetic data only. The QA planning artifacts document the requirements, risks, and test coverage.
+This independent portfolio uses a small tournament scoring demo to show how a release risk becomes a manual test, a Postman/Newman check, a Cypress regression, and CI evidence. All data is synthetic.
 
-- [Test strategy](docs/test-strategy.md)
-- [Scope and requirements](docs/scope-and-requirements.md)
-- [12 manual test cases](docs/manual-test-cases.md)
-- [Risk and traceability](docs/risk-and-traceability.md)
+The test strategy and manual coverage were authored for this portfolio. The demo, Postman/Newman API tests, Cypress JavaScript tests, and GitHub Actions workflow were created for it.
 
-## Run the local demo
+## Quick Review
 
-From the repository root, run `node demo/server.mjs` with Node.js 20 or newer, then open <http://127.0.0.1:3000>. The demo starts as Viewer with North Owls leading River Foxes 2–1. Select Organizer and apply the role to publish a score. Open Standings to see the points. Use **Reset demo to seeded state** to restore the 2–1 result and Viewer role.
+| Time | Evidence |
+| --- | --- |
+| 1 minute | [Test strategy](docs/test-strategy.md), [12 manual cases](docs/manual-test-cases.md), and the [completed manual run](docs/test-runs/2026-11-24-step-2.md#browser-rerun) |
+| 1 minute | [R-03 → M05 → A04 → UI-04](docs/risk-and-traceability.md#flagship-traceability). Follow an invalid score through manual, API, and browser coverage. |
+| 1 minute | [Postman/Newman collection](api/postman/tournament.collection.json), [Cypress UI-04 spec](cypress/e2e/ui-04-reject-invalid-score.cy.js), and [GitHub Actions workflow](.github/workflows/qa.yml) |
+| 1 minute | [Failure investigation](docs/failure-investigation.md). See the controlled assertion failure, Cypress screenshot, and passing retest. |
 
-The role selector simulates permissions for local testing. The score is shared across tabs in one server process and resets when the process restarts. The demo uses Node's built-in HTTP server and needs no dependencies.
+| Verification | Result |
+| --- | --- |
+| Manual | 12 Pass, 0 Fail, 0 Blocked |
+| Newman | 31 requests, 87 assertions, 0 failures |
+| Cypress | 5 passed, 0 failed, 0 skipped |
+| CI | Passing on `main` |
 
-## Run the API checks
+## Run locally
 
-Install the locked development dependencies once with `npm ci`. From the repository root, run:
+Use Node.js 24, the version used in CI. Run `npm ci` if you plan to run the test suites. If installation skipped the Cypress desktop binary, run `npx cypress install`.
 
-```sh
-npm run test:api
-```
-
-The command starts a fresh demo on an available loopback port, runs the [Postman collection](api/postman/tournament.collection.json) in Newman, and stops the demo afterward. Each scenario resets the match and Viewer role. Organizer scenarios switch roles through the demo form, with Newman carrying the returned cookie. Writes are checked for their HTTP status and then verified with separate reads of Match and Standings. These endpoints return HTML.
-
-The collection covers the seeded result (A01), a denied Viewer update (A02), a valid Organizer update (A03), and invalid scores that leave stored state intact (A04, linked to [R-03 and M05](docs/risk-and-traceability.md#flagship-traceability)).
-
-## Run the UI checks
-
-Use Node.js 20.1+ (20.x), 22.x, or 24+. Run `npm ci` and, if the Cypress desktop binary was skipped, run `npx cypress install`. Start the demo with `node demo/server.mjs`. In a separate terminal, run `npm run test:ui` to run all five Cypress specs, or run one spec by passing its path:
-
-```sh
-npm run test:ui -- --spec cypress/e2e/ui-04-reject-invalid-score.cy.js
-```
-
-Cypress resets its browser context and sends `POST /reset` before each test to restore the seeded score and Viewer role. Use a dedicated local demo instance because the app's in-memory score is shared across clients. Score submissions, navigation, reloads, and assertions all use the browser UI. See [UI-04](cypress/e2e/ui-04-reject-invalid-score.cy.js) for the browser regression tied to R-03, M05, and A04.
+- **Demo:** Run `node demo/server.mjs` and open <http://127.0.0.1:3000>. The seeded match starts at 2–1. Apply the Organizer role to publish a score. **Reset demo to seeded state** restores the result and Viewer role.
+- **API:** Run `npm run test:api`. The runner starts and stops its own demo. Newman resets each scenario and verifies saved state through separate Match and Standings requests.
+- **UI:** With the demo running on port 3000, run `npm run test:ui` in a separate terminal. Cypress resets the demo before each test. To run just the flagship regression, use `npm run test:ui -- --spec cypress/e2e/ui-04-reject-invalid-score.cy.js`.
