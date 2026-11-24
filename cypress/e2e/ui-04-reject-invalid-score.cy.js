@@ -4,7 +4,7 @@ it('UI-04 (R-03 / M05 / A04) — rejects an invalid score and preserves saved st
   expectMatch('2–1')
   publishScore('100', '1')
   cy.get('#home-error').should('be.visible')
-    .and('have.text', 'North Owls: Enter a whole number from 0 to 99.')
+    .and('have.text', 'North Owls: Enter a whole number from 0 to 98.')
   cy.get('#home').should('have.attr', 'aria-invalid', 'true')
   expectMatch('2–1')
 
