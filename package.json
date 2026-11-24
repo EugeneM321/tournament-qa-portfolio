@@ -1,0 +1,10 @@
+{
+  "name": "tournament-qa-portfolio",
+  "private": true,
+  "scripts": {
+    "test:api": "node api/run-newman.mjs"
+  },
+  "devDependencies": {
+    "newman": "6.2.1"
+  }
+}

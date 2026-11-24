@@ -1,0 +1,1010 @@
+{
+  "info": {
+    "name": "Cedar Cup demo HTTP QA",
+    "description": "Synthetic local demo only. Requests exercise the existing form endpoints and independently read the rendered match and standings responses.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:3000"
+    }
+  ],
+  "item": [
+    {
+      "name": "A01 — Seeded match/result read",
+      "description": "R-01 / M01",
+      "item": [
+        {
+          "name": "Reset to Viewer and seeded 2–1",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/reset"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});",
+                  "",
+                  "pm.test(\"Sets the viewer role cookie\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.include(\"demo-role=viewer;\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved match result",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "});",
+                  "",
+                  "pm.test(\"Match status is Published\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<p>Result status: Published</p>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved standings",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"Standings contain exactly two team rows\", () => {",
+                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
+                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A02 — Viewer update denied",
+      "description": "R-02 / M03",
+      "item": [
+        {
+          "name": "Reset to Viewer and seeded 2–1",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/reset"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});",
+                  "",
+                  "pm.test(\"Sets the viewer role cookie\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.include(\"demo-role=viewer;\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Viewer attempts to submit 1–2",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/score",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "home",
+                  "value": "1"
+                },
+                {
+                  "key": "away",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => {",
+                  "  pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Denial explains the required role\", () => {",
+                  "  pm.expect(pm.response.text()).to.eql(\"Only the Organizer can publish a score.\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved match result",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved standings",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"Standings contain exactly two team rows\", () => {",
+                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
+                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A03 — Organizer valid result update",
+      "description": "R-04 / M04",
+      "item": [
+        {
+          "name": "Reset to Viewer and seeded 2–1",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/reset"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});",
+                  "",
+                  "pm.test(\"Sets the viewer role cookie\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.include(\"demo-role=viewer;\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Apply Organizer role",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/role",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "role",
+                  "value": "organizer"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});",
+                  "",
+                  "pm.test(\"Sets the organizer role cookie\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.include(\"demo-role=organizer;\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publish 1–2",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/score",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "home",
+                  "value": "1"
+                },
+                {
+                  "key": "away",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved match result",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Saved match is North Owls 1\\u20132 River Foxes\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>1–2</strong> River Foxes</p>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved standings",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"River Foxes has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"North Owls has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"Standings contain exactly two team rows\", () => {",
+                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
+                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A04 — Invalid score preserves state",
+      "description": "Flagship R-03 / M05. Also covers M06–M08 and away-field validation.",
+      "item": [
+        {
+          "name": "Reset to Viewer and seeded 2–1",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/reset"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});",
+                  "",
+                  "pm.test(\"Sets the viewer role cookie\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.include(\"demo-role=viewer;\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Apply Organizer role",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/role",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "role",
+                  "value": "organizer"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});",
+                  "",
+                  "pm.test(\"Sets the organizer role cookie\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.include(\"demo-role=organizer;\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read baseline match",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read baseline standings",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"Standings contain exactly two team rows\", () => {",
+                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
+                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject Above limit (M05)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/score",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "home",
+                  "value": "100"
+                },
+                {
+                  "key": "away",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422\", () => {",
+                  "  pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation identifies the invalid field\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<span id=\\\"home-error\\\">North Owls: Enter a whole number from 0 to 99.</span>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read match after Above limit (M05)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read standings after Above limit (M05)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"Standings contain exactly two team rows\", () => {",
+                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
+                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject Negative (M06)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/score",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "home",
+                  "value": "-1"
+                },
+                {
+                  "key": "away",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422\", () => {",
+                  "  pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation identifies the invalid field\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<span id=\\\"home-error\\\">North Owls: Enter a whole number from 0 to 99.</span>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read match after Negative (M06)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read standings after Negative (M06)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"Standings contain exactly two team rows\", () => {",
+                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
+                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject Fractional (M07)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/score",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "home",
+                  "value": "1.5"
+                },
+                {
+                  "key": "away",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422\", () => {",
+                  "  pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation identifies the invalid field\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<span id=\\\"home-error\\\">North Owls: Enter a whole number from 0 to 99.</span>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read match after Fractional (M07)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read standings after Fractional (M07)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"Standings contain exactly two team rows\", () => {",
+                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
+                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject Blank (M08)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/score",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "home",
+                  "value": ""
+                },
+                {
+                  "key": "away",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422\", () => {",
+                  "  pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation identifies the invalid field\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<span id=\\\"home-error\\\">North Owls: Enter a score.</span>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read match after Blank (M08)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read standings after Blank (M08)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"Standings contain exactly two team rows\", () => {",
+                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
+                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject Away score above limit",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/score",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "home",
+                  "value": "2"
+                },
+                {
+                  "key": "away",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422\", () => {",
+                  "  pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation identifies the invalid field\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<span id=\\\"away-error\\\">River Foxes: Enter a whole number from 0 to 99.</span>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read match after Away score above limit",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read standings after Away score above limit",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
+                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "});",
+                  "",
+                  "pm.test(\"Standings contain exactly two team rows\", () => {",
+                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
+                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
