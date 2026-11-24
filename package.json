@@ -2,9 +2,11 @@
   "name": "tournament-qa-portfolio",
   "private": true,
   "scripts": {
-    "test:api": "node api/run-newman.mjs"
+    "test:api": "node api/run-newman.mjs",
+    "test:ui": "cypress run"
   },
   "devDependencies": {
+    "cypress": "15.21.2",
     "newman": "6.2.1"
   }
 }
