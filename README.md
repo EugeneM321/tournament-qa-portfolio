@@ -4,7 +4,45 @@
 
 This independent portfolio uses a small tournament scoring demo to show how a release risk becomes a manual test, a Postman/Newman check, a Cypress regression, and CI evidence. All data is synthetic.
 
-The test strategy and manual coverage were authored for this portfolio. The demo, Postman/Newman API tests, Cypress JavaScript tests, and GitHub Actions workflow were created for it.
+**Flagship risk:** An invalid 100–1 score must be rejected and leave the previously saved 2–1 result and standings unchanged. Postman/Newman checks the saved state through the API. Cypress with JavaScript checks the rejection and unchanged result in the browser.
+
+## Verified results
+
+| Verification | Result |
+| --- | --- |
+| Manual | 12 Pass, 0 Fail, 0 Blocked |
+| Newman | 31 requests, 87 assertions, 0 failures |
+| Cypress | 5 passed, 0 failed, 0 skipped |
+| CI | Passing on `main` |
+
+## Quick start
+
+Use Node.js 24 from the repository root.
+
+```sh
+npm ci
+npm run test:api
+```
+
+Newman starts and stops its own demo, resets each scenario, and verifies the saved result and standings through separate reads.
+
+For API-only use in a POSIX shell, install dependencies without downloading the Cypress binary with `CYPRESS_INSTALL_BINARY=0 npm ci`. You can run Newman immediately afterward.
+
+For browser testing, start the demo and leave it running on port 3000.
+
+```sh
+node demo/server.mjs
+```
+
+Open <http://127.0.0.1:3000> to try the seeded match. Apply the Organizer role to submit a score. **Reset demo to seeded state** restores the original result and Viewer role.
+
+From another terminal, run Cypress. If the desktop binary is missing, first run `npx cypress install`.
+
+```sh
+npm run test:ui
+```
+
+Cypress resets the demo before each case. Run just the invalid-score regression with `npm run test:ui -- --spec cypress/e2e/ui-04-reject-invalid-score.cy.js`.
 
 ## Quick Review
 
@@ -15,17 +53,4 @@ The test strategy and manual coverage were authored for this portfolio. The demo
 | 1 minute | [Postman/Newman collection](api/postman/tournament.collection.json), [Cypress UI-04 spec](cypress/e2e/ui-04-reject-invalid-score.cy.js), and [GitHub Actions workflow](.github/workflows/qa.yml) |
 | 1 minute | [Failure investigation](docs/failure-investigation.md). See the controlled assertion failure, Cypress screenshot, and passing retest. |
 
-| Verification | Result |
-| --- | --- |
-| Manual | 12 Pass, 0 Fail, 0 Blocked |
-| Newman | 31 requests, 87 assertions, 0 failures |
-| Cypress | 5 passed, 0 failed, 0 skipped |
-| CI | Passing on `main` |
-
-## Run locally
-
-Use Node.js 24, the version used in CI. Run `npm ci` if you plan to run the test suites. If installation skipped the Cypress desktop binary, run `npx cypress install`.
-
-- **Demo:** Run `node demo/server.mjs` and open <http://127.0.0.1:3000>. The seeded match starts at 2–1. Apply the Organizer role to publish a score. **Reset demo to seeded state** restores the result and Viewer role.
-- **API:** Run `npm run test:api`. The runner starts and stops its own demo. Newman resets each scenario and verifies saved state through separate Match and Standings requests.
-- **UI:** With the demo running on port 3000, run `npm run test:ui` in a separate terminal. Cypress resets the demo before each test. To run just the flagship regression, use `npm run test:ui -- --spec cypress/e2e/ui-04-reject-invalid-score.cy.js`.
+The demo, test strategy, manual cases, automation, and CI were created for this independent synthetic portfolio.
