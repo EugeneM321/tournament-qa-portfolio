@@ -3,6 +3,8 @@ name: Tournament QA
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -13,6 +15,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
+      - name: Create reports directory
+        run: |
+          mkdir -p "$RUNNER_TEMP/qa-reports"
+          echo "QA_REPORT_DIR=$RUNNER_TEMP/qa-reports" >> "$GITHUB_ENV"
+
       - name: Check out repository
         uses: actions/checkout@v7
         with:
@@ -30,7 +37,7 @@ jobs:
           CYPRESS_INSTALL_BINARY: '0'
         run: npm ci
 
-      - name: Run Newman API suite
+      - name: Run Newman form and HTML HTTP suite
         run: npm run test:api
 
       - name: Run Cypress UI suite
@@ -69,3 +76,33 @@ jobs:
             cypress/videos/
             ${{ runner.temp }}/tournament-demo.log
           if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Summarize test results
+        if: ${{ !cancelled() }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import glob
+          import os
+          from pathlib import Path
+          from xml.etree import ElementTree
+
+          print("### QA test results\n")
+          reports = sorted(glob.glob(os.path.join(os.environ["QA_REPORT_DIR"], "*.xml")))
+          if not reports:
+              print("No test reports were produced. See the job log for setup errors.")
+          for report in reports:
+              cases = ElementTree.parse(report).getroot().findall(".//testcase")
+              failed = sum(case.find("failure") is not None or case.find("error") is not None for case in cases)
+              skipped = sum(case.find("skipped") is not None for case in cases)
+              print(f"- {Path(report).name} — {len(cases)} cases, {failed} failed, {skipped} skipped")
+          PY
+
+      - name: Upload machine-readable test reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: qa-test-reports
+          path: ${{ env.QA_REPORT_DIR }}/*.xml
+          if-no-files-found: ignore
+          retention-days: 7

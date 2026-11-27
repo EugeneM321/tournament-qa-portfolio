@@ -29,7 +29,8 @@ try {
       collection,
       envVar: [{ key: 'baseUrl', value: baseUrl }],
       ignoreRedirects: true,
-      reporters: 'cli',
+      reporters: process.env.QA_REPORT_DIR ? ['cli', 'junit'] : ['cli'],
+      reporter: { junit: { export: process.env.QA_REPORT_DIR + '/newman.xml' } },
       timeout: 30000,
       timeoutRequest: 5000,
     }, (error, result) => {
