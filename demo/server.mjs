@@ -69,7 +69,8 @@ function matchPage(role, errors = {}) {
       ${scoreField('home', teams[0], errors.home ? '' : result.home, errors.home, Boolean(errors.home))}
       ${scoreField('away', teams[1], errors.away ? '' : result.away, errors.away, !errors.home && Boolean(errors.away))}
       <button type="submit">Publish score</button>
-    </form>` : ''
+    </form>
+    ${errors.home || errors.away ? '<script>document.querySelector("main [autofocus]")?.focus()</script>' : ''}` : ''
   return page('Match', role, '/', `
     <p>${teams[0]} <strong>${result.home}–${result.away}</strong> ${teams[1]}</p>
     <p>Result status: Published</p>
