@@ -14,7 +14,9 @@ it('UI-06 (R-05 / M12) — keyboard submission focuses and describes the invalid
   cy.focused().should('have.attr', 'id', 'away')
   cy.press(Cypress.Keyboard.Keys.TAB)
   cy.focused().should('have.text', 'Publish score')
-  cy.press(Cypress.Keyboard.Keys.ENTER)
+  cy.intercept('POST', '/score').as('rejectScore')
+  cy.press(Cypress.Keyboard.Keys.SPACE)
+  cy.wait('@rejectScore').its('response.statusCode').should('eq', 422)
 
   cy.focused().should($field => {
     expect($field).to.have.attr('id', 'home')
