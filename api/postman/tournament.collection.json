@@ -58,13 +58,16 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
-                  "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
                   "});",
-                  "",
-                  "pm.test(\"Match status is Published\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<p>Result status: Published</p>\");",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
+                  "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
+                  "  pm.expect(pageText).to.include(\"North Owls 2–1 River Foxes\");",
+                  "});",
+                  "pm.test(\"Match is published\", () => {",
+                  "  pm.expect(pageText).to.include(\"Result status: Published\");",
                   "});"
                 ]
               }
@@ -86,19 +89,24 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
-                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
                   "});",
-                  "",
-                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
                   "});",
-                  "",
-                  "pm.test(\"Standings contain exactly two team rows\", () => {",
-                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
-                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
                   "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"1\", \"0\", \"0\", \"3\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"0\", \"0\", \"1\", \"0\"]);",
                   "});"
                 ]
               }
@@ -191,9 +199,13 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
                   "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "  pm.expect(pageText).to.include(\"North Owls 2–1 River Foxes\");",
                   "});"
                 ]
               }
@@ -215,19 +227,24 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
-                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
                   "});",
-                  "",
-                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
                   "});",
-                  "",
-                  "pm.test(\"Standings contain exactly two team rows\", () => {",
-                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
-                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
                   "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"1\", \"0\", \"0\", \"3\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"0\", \"0\", \"1\", \"0\"]);",
                   "});"
                 ]
               }
@@ -357,9 +374,13 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
                   "pm.test(\"Saved match is North Owls 1\\u20132 River Foxes\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>1–2</strong> River Foxes</p>\");",
+                  "  pm.expect(pageText).to.include(\"North Owls 1–2 River Foxes\");",
                   "});"
                 ]
               }
@@ -381,19 +402,24 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
-                  "pm.test(\"River Foxes has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
                   "});",
-                  "",
-                  "pm.test(\"North Owls has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
                   "});",
-                  "",
-                  "pm.test(\"Standings contain exactly two team rows\", () => {",
-                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
-                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
                   "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"0\", \"0\", \"1\", \"0\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"1\", \"0\", \"0\", \"3\"]);",
                   "});"
                 ]
               }
@@ -486,9 +512,13 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
                   "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "  pm.expect(pageText).to.include(\"North Owls 2–1 River Foxes\");",
                   "});"
                 ]
               }
@@ -510,19 +540,24 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
-                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
                   "});",
-                  "",
-                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
                   "});",
-                  "",
-                  "pm.test(\"Standings contain exactly two team rows\", () => {",
-                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
-                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
                   "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"1\", \"0\", \"0\", \"3\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"0\", \"0\", \"1\", \"0\"]);",
                   "});"
                 ]
               }
@@ -557,9 +592,13 @@
                   "pm.test(\"HTTP 422\", () => {",
                   "  pm.response.to.have.status(422);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const fieldError = pm.response.text().match(/<span\\b[^>]*\\bid=[\"']home-error[\"'][^>]*>([\\s\\S]*?)<\\/span>/i);",
                   "pm.test(\"Validation identifies the invalid field\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<span id=\\\"home-error\\\">North Owls: Enter a whole number from 0 to 99.</span>\");",
+                  "  pm.expect(text(fieldError?.[1] ?? \"\")).to.eql(\"North Owls: Enter a whole number from 0 to 99.\");",
                   "});"
                 ]
               }
@@ -581,9 +620,13 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
                   "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "  pm.expect(pageText).to.include(\"North Owls 2–1 River Foxes\");",
                   "});"
                 ]
               }
@@ -605,19 +648,24 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
-                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
                   "});",
-                  "",
-                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
                   "});",
-                  "",
-                  "pm.test(\"Standings contain exactly two team rows\", () => {",
-                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
-                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
                   "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"1\", \"0\", \"0\", \"3\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"0\", \"0\", \"1\", \"0\"]);",
                   "});"
                 ]
               }
@@ -652,9 +700,13 @@
                   "pm.test(\"HTTP 422\", () => {",
                   "  pm.response.to.have.status(422);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const fieldError = pm.response.text().match(/<span\\b[^>]*\\bid=[\"']home-error[\"'][^>]*>([\\s\\S]*?)<\\/span>/i);",
                   "pm.test(\"Validation identifies the invalid field\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<span id=\\\"home-error\\\">North Owls: Enter a whole number from 0 to 99.</span>\");",
+                  "  pm.expect(text(fieldError?.[1] ?? \"\")).to.eql(\"North Owls: Enter a whole number from 0 to 99.\");",
                   "});"
                 ]
               }
@@ -676,9 +728,13 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
                   "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "  pm.expect(pageText).to.include(\"North Owls 2–1 River Foxes\");",
                   "});"
                 ]
               }
@@ -700,19 +756,24 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
-                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
                   "});",
-                  "",
-                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
                   "});",
-                  "",
-                  "pm.test(\"Standings contain exactly two team rows\", () => {",
-                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
-                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
                   "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"1\", \"0\", \"0\", \"3\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"0\", \"0\", \"1\", \"0\"]);",
                   "});"
                 ]
               }
@@ -747,9 +808,13 @@
                   "pm.test(\"HTTP 422\", () => {",
                   "  pm.response.to.have.status(422);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const fieldError = pm.response.text().match(/<span\\b[^>]*\\bid=[\"']home-error[\"'][^>]*>([\\s\\S]*?)<\\/span>/i);",
                   "pm.test(\"Validation identifies the invalid field\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<span id=\\\"home-error\\\">North Owls: Enter a whole number from 0 to 99.</span>\");",
+                  "  pm.expect(text(fieldError?.[1] ?? \"\")).to.eql(\"North Owls: Enter a whole number from 0 to 99.\");",
                   "});"
                 ]
               }
@@ -771,9 +836,13 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
                   "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "  pm.expect(pageText).to.include(\"North Owls 2–1 River Foxes\");",
                   "});"
                 ]
               }
@@ -795,19 +864,24 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
-                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
                   "});",
-                  "",
-                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
                   "});",
-                  "",
-                  "pm.test(\"Standings contain exactly two team rows\", () => {",
-                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
-                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
                   "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"1\", \"0\", \"0\", \"3\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"0\", \"0\", \"1\", \"0\"]);",
                   "});"
                 ]
               }
@@ -842,9 +916,13 @@
                   "pm.test(\"HTTP 422\", () => {",
                   "  pm.response.to.have.status(422);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const fieldError = pm.response.text().match(/<span\\b[^>]*\\bid=[\"']home-error[\"'][^>]*>([\\s\\S]*?)<\\/span>/i);",
                   "pm.test(\"Validation identifies the invalid field\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<span id=\\\"home-error\\\">North Owls: Enter a score.</span>\");",
+                  "  pm.expect(text(fieldError?.[1] ?? \"\")).to.eql(\"North Owls: Enter a score.\");",
                   "});"
                 ]
               }
@@ -866,9 +944,13 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
                   "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "  pm.expect(pageText).to.include(\"North Owls 2–1 River Foxes\");",
                   "});"
                 ]
               }
@@ -890,19 +972,24 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
-                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
                   "});",
-                  "",
-                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
                   "});",
-                  "",
-                  "pm.test(\"Standings contain exactly two team rows\", () => {",
-                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
-                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
                   "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"1\", \"0\", \"0\", \"3\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"0\", \"0\", \"1\", \"0\"]);",
                   "});"
                 ]
               }
@@ -937,9 +1024,13 @@
                   "pm.test(\"HTTP 422\", () => {",
                   "  pm.response.to.have.status(422);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const fieldError = pm.response.text().match(/<span\\b[^>]*\\bid=[\"']away-error[\"'][^>]*>([\\s\\S]*?)<\\/span>/i);",
                   "pm.test(\"Validation identifies the invalid field\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<span id=\\\"away-error\\\">River Foxes: Enter a whole number from 0 to 99.</span>\");",
+                  "  pm.expect(text(fieldError?.[1] ?? \"\")).to.eql(\"River Foxes: Enter a whole number from 0 to 99.\");",
                   "});"
                 ]
               }
@@ -961,9 +1052,13 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
                   "pm.test(\"Saved match is North Owls 2\\u20131 River Foxes\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<p>North Owls <strong>2–1</strong> River Foxes</p>\");",
+                  "  pm.expect(pageText).to.include(\"North Owls 2–1 River Foxes\");",
                   "});"
                 ]
               }
@@ -985,19 +1080,650 @@
                   "pm.test(\"HTTP 200\", () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
-                  "pm.test(\"North Owls has 1 win, 0 draws, 0 loss, and 3 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">North Owls</th><td>1</td><td>0</td><td>0</td><td>3</td></tr>\");",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
                   "});",
-                  "",
-                  "pm.test(\"River Foxes has 0 win, 0 draws, 1 loss, and 0 points\", () => {",
-                  "  pm.expect(pm.response.text()).to.include(\"<tr><th scope=\\\"row\\\">River Foxes</th><td>0</td><td>0</td><td>1</td><td>0</td></tr>\");",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
                   "});",
-                  "",
-                  "pm.test(\"Standings contain exactly two team rows\", () => {",
-                  "  const body = pm.response.text().split(\"<tbody>\")[1] || \"\";",
-                  "  const rows = body.split(\"</tbody>\")[0].match(/<tr>/g) || [];",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
                   "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"1\", \"0\", \"0\", \"3\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"0\", \"0\", \"1\", \"0\"]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A05 — Inclusive score boundaries",
+      "item": [
+        {
+          "name": "Reset to Viewer and seeded 2–1",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/reset"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});",
+                  "",
+                  "pm.test(\"Sets the viewer role cookie\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.include(\"demo-role=viewer;\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Apply Organizer role",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/role",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "role",
+                  "value": "organizer"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});",
+                  "",
+                  "pm.test(\"Sets the organizer role cookie\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.include(\"demo-role=organizer;\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publish 0–99",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/score",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "home",
+                  "value": "0"
+                },
+                {
+                  "key": "away",
+                  "value": "99"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved match result",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
+                  "pm.test(\"Saved match is North Owls 0\\u201399 River Foxes\", () => {",
+                  "  pm.expect(pageText).to.include(\"North Owls 0–99 River Foxes\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved standings",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
+                  "});",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"0\", \"0\", \"1\", \"0\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"1\", \"0\", \"0\", \"3\"]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A06 — Draw awards one point per team",
+      "item": [
+        {
+          "name": "Reset to Viewer and seeded 2–1",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/reset"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});",
+                  "",
+                  "pm.test(\"Sets the viewer role cookie\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.include(\"demo-role=viewer;\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Apply Organizer role",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/role",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "role",
+                  "value": "organizer"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});",
+                  "",
+                  "pm.test(\"Sets the organizer role cookie\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.include(\"demo-role=organizer;\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publish 4–4",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/score",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "home",
+                  "value": "4"
+                },
+                {
+                  "key": "away",
+                  "value": "4"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved match result",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
+                  "pm.test(\"Saved match is North Owls 4\\u20134 River Foxes\", () => {",
+                  "  pm.expect(pageText).to.include(\"North Owls 4–4 River Foxes\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved standings",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
+                  "});",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"0\", \"1\", \"0\", \"1\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"0\", \"1\", \"0\", \"1\"]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A07 — Republishing does not double-count standings",
+      "item": [
+        {
+          "name": "Reset to Viewer and seeded 2–1",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/reset"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});",
+                  "",
+                  "pm.test(\"Sets the viewer role cookie\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.include(\"demo-role=viewer;\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Apply Organizer role",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/role",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "role",
+                  "value": "organizer"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});",
+                  "",
+                  "pm.test(\"Sets the organizer role cookie\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.include(\"demo-role=organizer;\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publish 1–2",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/score",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "home",
+                  "value": "1"
+                },
+                {
+                  "key": "away",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved match result",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
+                  "pm.test(\"Saved match is North Owls 1\\u20132 River Foxes\", () => {",
+                  "  pm.expect(pageText).to.include(\"North Owls 1–2 River Foxes\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved standings",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
+                  "});",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"0\", \"0\", \"1\", \"0\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"1\", \"0\", \"0\", \"3\"]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Republish the same score",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/score",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "home",
+                  "value": "1"
+                },
+                {
+                  "key": "away",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 303\", () => {",
+                  "  pm.response.to.have.status(303);",
+                  "});",
+                  "",
+                  "pm.test(\"Redirects to the match\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved match result",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const pageText = text(pm.response.text());",
+                  "pm.test(\"Saved match is North Owls 1\\u20132 River Foxes\", () => {",
+                  "  pm.expect(pageText).to.include(\"North Owls 1–2 River Foxes\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read saved standings",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/standings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"HTML content type\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^text\\/html\\b/i);",
+                  "});",
+                  "const text = html => html.replace(/<[^>]+>/g, \" \").replace(/\\s+/g, \" \").trim();",
+                  "const table = pm.response.text().match(/<tbody\\b[^>]*>([\\s\\S]*?)<\\/tbody>/i);",
+                  "pm.test(\"Standings table body is present\", () => {",
+                  "  pm.expect(table).to.not.equal(null);",
+                  "});",
+                  "const rows = [...(table?.[1] ?? \"\").matchAll(/<tr\\b[^>]*>([\\s\\S]*?)<\\/tr>/gi)]",
+                  "  .map(row => [...row[1].matchAll(/<t[hd]\\b[^>]*>([\\s\\S]*?)<\\/t[hd]>/gi)].map(cell => text(cell[1])));",
+                  "pm.test(\"Exactly two standings rows\", () => {",
+                  "  pm.expect(rows).to.have.lengthOf(2);",
+                  "});",
+                  "pm.test(\"Standings for North Owls\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"North Owls\")).to.eql([\"North Owls\", \"0\", \"0\", \"1\", \"0\"]);",
+                  "});",
+                  "pm.test(\"Standings for River Foxes\", () => {",
+                  "  pm.expect(rows.find(row => row[0] === \"River Foxes\")).to.eql([\"River Foxes\", \"1\", \"0\", \"0\", \"3\"]);",
                   "});"
                 ]
               }
